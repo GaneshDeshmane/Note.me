@@ -87,6 +87,8 @@ app.post('/signin',async function(req,res){
           
 
 app.post('/notes',authMiddleware,function(req,res){
+    const user_Id = req.user_Id;
+    const notes = req.body.notes;
     
 })
 app.post('/photos',authMiddleware,function(req,res){
