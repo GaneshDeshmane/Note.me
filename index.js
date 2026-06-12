@@ -2,8 +2,11 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt')
 const {UserModel,NoteModel,PhotoModel}=require('./db')
-const {z, email, minLength} = require('zod')
-const JWT_SECRET =process.env.JWT_SECRET
+const {z, email, minLength} = require('zod');
+const {authMiddleware} = require('./authMiddleware');
+
+const JWT_SECRET =process.env.JWT_SECRET;
+process.config()
 const app = express();
 const UserRequirement =z.object({
     name : z.string(),
@@ -42,7 +45,7 @@ app.post('/signup',async function(req,res){
         })
     }
 })
-app.post('/signin',function(req,res){
+app.post('/signin',async function(req,res){
     const SigninRequired = z.object({
         email : z.email(),
         password:z.string(minLength(6))
@@ -56,20 +59,43 @@ app.post('/signin',function(req,res){
         
     }
     let checkUser ;
-    
-})
-           
+    try{
+        checkUser= await UserModel.findOne({
+        email : Parsedata.data.email,
+        password : Parsedata.data.password
+    })}
+    catch(err){
+        return res.status(400).json({
+            msg : 'error occurred while signing in',
+            error : err.message
+        })
+    }
+         if(!checkUser){
+        return res.status(400).json({
+            msg : 'invalid credentials'
+        })
+     }
+        const token = jwt.sign({user_Id : checkUser._id},JWT_SECRET)
+        res.json({
+            msg : 'signedin successfully',
+            token:token
+        })
 
-app.post('/notes',function(req,res){
+    
     
 })
-app.post('/photos',function(req,res){
+          
+
+app.post('/notes',authMiddleware,function(req,res){
     
 })
-app.get('/notes',function(req,res){
+app.post('/photos',authMiddleware,function(req,res){
+    
+})
+app.get('/notes',authMiddleware,function(req,res){
 
 })
-app.get('/photos',function(req,res){
+app.get('/photos',authMiddleware,function(req,res){
 
 })
 app.listen(3000);
