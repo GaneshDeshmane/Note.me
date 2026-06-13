@@ -2,26 +2,26 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt')
 const {UserModel,NoteModel,PhotoModel}=require('./db')
-const {z, email, minLength} = require('zod');
+const {z} = require('zod');
 const {authMiddleware} = require('./authMiddleware');
-
+require('dotenv').config()
 const JWT_SECRET =process.env.JWT_SECRET;
-process.config()
+
 const app = express();
+app.use(express.json())
 const UserRequirement =z.object({
     name : z.string(),
-    email : z.email(),
-    password :z.string(minLength(6))
+    email : z.string().email(),
+    password :z.string().min(6)
 })
 app.post('/signup',async function(req,res){
     const Parsedata = UserRequirement.safeParse(req.body)
     if(!Parsedata.success){
-        return
-        res.json({
+        return res.json({
             msg : "validation error"
         })
     }
-    const existingUser = UserModel.findOne({
+    const existingUser = await UserModel.findOne({
         email : Parsedata.data.email
     })
     if(existingUser){
@@ -47,14 +47,14 @@ app.post('/signup',async function(req,res){
 })
 app.post('/signin',async function(req,res){
     const SigninRequired = z.object({
-        email : z.email(),
-        password:z.string(minLength(6))
+        email : z.string().email(),
+        password:z.string().min(6)
     })
     const Parsedata = SigninRequired.safeParse(req.body)
     if(!Parsedata.success){
              return res.status(400).json({
             msg : 'validation error',
-            error : parseData.error.errors
+            error : Parsedata.error.errors
         })
         
     }
@@ -86,13 +86,45 @@ app.post('/signin',async function(req,res){
 })
           
 
-app.post('/notes',authMiddleware,function(req,res){
+app.post('/notes',authMiddleware,async function(req,res){
     const user_Id = req.user_Id;
     const notes = req.body.notes;
-    
+    const token = req.body.token 
+    try{
+    const newNotes =  await NoteModel.create({
+        notes : notes,
+        userId: user_Id
+
+    })
+    res.json({
+        msg : 'notes created'
+    })
+    }
+    catch(err){
+        err : err.message;
+        res.json({
+            msg : 'failed to create notes'
+        })
+    }
+
 })
-app.post('/photos',authMiddleware,function(req,res){
-    
+app.post('/photos',authMiddleware,async function(req,res){
+    const token = req.body.token
+    const user_Id = req.user_Id
+    const photo = req.body.photo
+    try{
+    const photoNew = await PhotoModel.create({
+        photo : photo,
+        userId: user_Id
+    })
+    res.json({
+        msg : 'photo stored'
+    })
+}catch(err){
+    res.status(500).json({
+            msg: "failed to create photo",
+            error: err.message})
+}
 })
 app.get('/notes',authMiddleware,function(req,res){
 
