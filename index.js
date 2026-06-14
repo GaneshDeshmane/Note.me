@@ -3,11 +3,15 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt')
 const {UserModel,NoteModel,PhotoModel}=require('./db')
 const {z} = require('zod');
+const cors = require('cors')
+const path = require('path')
 const {authMiddleware} = require('./authMiddleware');
 require('dotenv').config()
 const JWT_SECRET =process.env.JWT_SECRET;
 
 const app = express();
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(cors())
 app.use(express.json())
 const UserRequirement =z.object({
     name : z.string(),
@@ -87,36 +91,27 @@ app.post('/signin',async function(req,res){
           
 
 app.post('/notes',authMiddleware,async function(req,res){
-    const user_Id = req.user_Id;
-    const notes = req.body.notes;
-    const token = req.body.token 
-    try{
-    const newNotes =  await NoteModel.create({
-        notes : notes,
-        userId: user_Id
+   const { title, content } = req.body;
 
-    })
-    res.json({
-        msg : 'notes created'
-    })
-    }
-    catch(err){
-        err : err.message;
-        res.json({
-            msg : 'failed to create notes'
-        })
-    }
+await NoteModel.create({
+    title,
+    content,
+    userId: req.user_Id
+});
+res.json({
+    msg : 'notes created successfully'
+})
 
 })
 app.post('/photos',authMiddleware,async function(req,res){
-    const token = req.body.token
+   
     const user_Id = req.user_Id
     const photo = req.body.photo
     try{
     const photoNew = await PhotoModel.create({
-        photo : photo,
-        userId: user_Id
-    })
+            url: req.body.url,
+            userId: req.user_Id
+        });
     res.json({
         msg : 'photo stored'
     })
@@ -126,10 +121,27 @@ app.post('/photos',authMiddleware,async function(req,res){
             error: err.message})
 }
 })
-app.get('/notes',authMiddleware,function(req,res){
+app.get('/notes', authMiddleware, async function(req, res) {
+    const userId = req.user_Id;
 
-})
-app.get('/photos',authMiddleware,function(req,res){
+    const notes = await NoteModel.find({
+        userId: userId
+    });
 
+    res.json({
+        notes
+    });
+});
+
+app.get('/photos',authMiddleware,async function(req,res){
+        const userId = req.user_Id;
+
+    const photo = await PhotoModel.find({
+        userId: userId
+    });
+
+    res.json({
+        photo
+    });
 })
 app.listen(3000);

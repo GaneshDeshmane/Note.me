@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Taskflow</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --navy:      #0f1829;
+      --navy-2:    #1a2640;
+      --navy-3:    #243352;
+      --accent:    #4f8ef7;
+      --accent-dim: rgba(79,142,247,0.15);
+      --text-1:    #e8edf5;
+      --text-2:    #8fa3c0;
+      --text-3:    #5a7a9e;
+      --border:    rgba(255,255,255,0.08);
+      --border-2:  rgba(255,255,255,0.14);
+      --danger:    #e24b4a;
+      --success:   #1d9e75;
+      --radius:    10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--navy);
+      color: var(--text-1);
+      min-height: 100vh;
+    }
+
+    /* ── Screens ── */
+    .screen { display: none; }
+    .screen.active { display: flex; }
+
+    /* ── Auth ── */
+    .auth-wrap {
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+    }
+    .auth-card {
+      background: var(--navy-2);
+      border: 0.5px solid var(--border-2);
+      border-radius: 14px;
+      padding: 2rem 2.25rem;
+      width: 100%;
+      max-width: 380px;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 1.75rem;
+      justify-content: center;
+    }
+    .logo-mark {
+      width: 32px; height: 32px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; color: #fff;
+    }
+    .logo-text { font-size: 18px; font-weight: 500; color: var(--text-1); letter-spacing: -0.3px; }
+    .auth-card h2 { font-size: 15px; font-weight: 500; color: var(--text-1); margin-bottom: 0.25rem; }
+    .auth-card > p { font-size: 13px; color: var(--text-2); margin-bottom: 1.5rem; }
+
+    .field { margin-bottom: 1rem; }
+    .field label { display: block; font-size: 12px; color: var(--text-2); margin-bottom: 5px; }
+    .field input {
+      width: 100%;
+      background: var(--navy-3);
+      border: 0.5px solid var(--border-2);
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 14px;
+      color: var(--text-1);
+      outline: none;
+      transition: border-color 0.15s;
+      font-family: inherit;
+    }
+    .field input:focus { border-color: var(--accent); }
+    .field input::placeholder { color: var(--text-3); }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity 0.15s;
+      font-family: inherit;
+      margin-top: 0.25rem;
+    }
+    .btn-primary:hover { opacity: 0.88; }
+    .btn-primary:disabled { opacity: 0.5; cursor: default; }
+
+    .auth-switch { font-size: 13px; color: var(--text-2); text-align: center; margin-top: 1.25rem; }
+    .auth-switch a { color: var(--accent); cursor: pointer; text-decoration: none; }
+
+    .toast {
+      font-size: 13px;
+      padding: 9px 12px;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .toast.error   { background: rgba(226,75,74,0.15);  color: #f09595; border: 0.5px solid rgba(226,75,74,0.3); }
+    .toast.success { background: rgba(29,158,117,0.15); color: #5dcaa5; border: 0.5px solid rgba(29,158,117,0.3); }
+    .toast.show { display: block; }
+
+    /* ── Dashboard ── */
+    .dash-wrap { flex-direction: column; min-height: 100vh; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.85rem 1.5rem;
+      background: var(--navy-2);
+      border-bottom: 0.5px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .topbar-logo { display: flex; align-items: center; gap: 8px; }
+    .topbar-logo .logo-mark { width: 26px; height: 26px; font-size: 13px; }
+    .topbar-logo span { font-size: 15px; font-weight: 500; color: var(--text-1); }
+
+    .user-chip { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-2); }
+    .avatar {
+      width: 28px; height: 28px;
+      background: var(--accent-dim);
+      border: 1px solid rgba(79,142,247,0.3);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 500; color: var(--accent);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 0.5px solid var(--border-2);
+      border-radius: 7px;
+      padding: 5px 11px;
+      font-size: 12px;
+      color: var(--text-2);
+      cursor: pointer;
+      display: flex; align-items: center; gap: 5px;
+      transition: color 0.15s;
+      font-family: inherit;
+    }
+    .btn-ghost:hover { color: var(--text-1); }
+
+    .tabs {
+      display: flex;
+      border-bottom: 0.5px solid var(--border);
+      padding: 0 1.5rem;
+      background: var(--navy-2);
+    }
+    .tab {
+      font-size: 13px;
+      color: var(--text-2);
+      padding: 10px 14px;
+      cursor: pointer;
+      border: none;
+      border-bottom: 2px solid transparent;
+      background: none;
+      display: flex; align-items: center; gap: 6px;
+      transition: color 0.15s;
+      font-family: inherit;
+    }
+    .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+    .tab:hover:not(.active) { color: var(--text-1); }
+
+    .dash-body { flex: 1; padding: 1.5rem; max-width: 900px; margin: 0 auto; width: 100%; }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    .section-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 1.25rem;
+    }
+    .section-title { font-size: 14px; font-weight: 500; color: var(--text-1); }
+    .count-badge {
+      font-size: 11px; color: var(--text-3);
+      background: var(--navy-3);
+      border: 0.5px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 8px;
+      margin-left: 8px;
+    }
+
+    .btn-add {
+      display: flex; align-items: center; gap: 5px;
+      background: var(--accent-dim);
+      border: 0.5px solid rgba(79,142,247,0.3);
+      border-radius: 7px;
+      padding: 6px 12px;
+      font-size: 13px;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.15s;
+      font-family: inherit;
+    }
+    .btn-add:hover { background: rgba(79,142,247,0.22); }
+
+    .compose-box {
+      background: var(--navy-2);
+      border: 0.5px solid var(--border-2);
+      border-radius: var(--radius);
+      padding: 1rem;
+      margin-bottom: 1.25rem;
+      display: none;
+    }
+    .compose-box.open { display: block; }
+
+    .compose-box input,
+    .compose-box textarea {
+      width: 100%;
+      background: var(--navy-3);
+      border: 0.5px solid var(--border-2);
+      border-radius: 7px;
+      padding: 8px 11px;
+      font-size: 13px;
+      color: var(--text-1);
+      outline: none;
+      font-family: inherit;
+      margin-bottom: 8px;
+      transition: border-color 0.15s;
+    }
+    .compose-box input:focus,
+    .compose-box textarea:focus { border-color: var(--accent); }
+    .compose-box input::placeholder,
+    .compose-box textarea::placeholder { color: var(--text-3); }
+    .compose-box textarea { resize: vertical; min-height: 80px; }
+
+    .compose-actions { display: flex; gap: 8px; justify-content: flex-end; }
+    .btn-cancel {
+      background: transparent;
+      border: 0.5px solid var(--border-2);
+      border-radius: 7px;
+      padding: 6px 13px;
+      font-size: 13px;
+      color: var(--text-2);
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-save {
+      background: var(--accent);
+      border: none;
+      border-radius: 7px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #fff;
+      cursor: pointer;
+      font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    .btn-save:hover { opacity: 0.88; }
+
+    /* Notes */
+    .notes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 12px;
+    }
+    .note-card {
+      background: var(--navy-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+      position: relative;
+      transition: border-color 0.15s;
+    }
+    .note-card:hover { border-color: var(--border-2); }
+    .note-card-title { font-size: 13px; font-weight: 500; color: var(--text-1); margin-bottom: 6px; padding-right: 16px; }
+    .note-card-content { font-size: 12px; color: var(--text-2); line-height: 1.6; }
+    .note-card-date { font-size: 11px; color: var(--text-3); margin-top: 10px; }
+    .note-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--accent);
+      position: absolute; top: 12px; right: 12px;
+    }
+
+    /* Photos */
+    .photo-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 12px;
+    }
+    .photo-card {
+      background: var(--navy-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      transition: border-color 0.15s;
+    }
+    .photo-card:hover { border-color: var(--border-2); }
+    .photo-thumb {
+      height: 110px;
+      background: var(--navy-3);
+      display: flex; align-items: center; justify-content: center;
+      overflow: hidden;
+    }
+    .photo-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .photo-thumb-placeholder { font-size: 28px; color: var(--text-3); }
+    .photo-url {
+      padding: 8px 10px;
+      font-size: 11px;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Empty & loading states */
+    .empty-state { text-align: center; padding: 3rem 1rem; color: var(--text-3); }
+    .empty-state i { font-size: 36px; margin-bottom: 12px; display: block; }
+    .empty-state p { font-size: 13px; }
+
+    .loading-pulse { display: flex; gap: 8px; padding: 1rem 0; }
+    .pulse-card {
+      background: var(--navy-2);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius);
+      height: 100px;
+      flex: 1;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; }
+      50%       { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Sign In ── -->
+  <div id="screen-signin" class="screen active auth-wrap">
+    <div class="auth-card">
+      <div class="logo">
+        <div class="logo-mark"><i class="ti ti-layout-kanban"></i></div>
+        <span class="logo-text">Taskflow</span>
+      </div>
+      <h2>Welcome back</h2>
+      <p>Sign in to your workspace</p>
+      <div id="signin-toast" class="toast"></div>
+      <div class="field">
+        <label>Email</label>
+        <input id="si-email" type="email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input id="si-password" type="password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="signin-btn" onclick="doSignin()">Sign in</button>
+      <p class="auth-switch">Don't have an account? <a onclick="showScreen('signup')">Create one</a></p>
+    </div>
+  </div>
+
+  <!-- ── Sign Up ── -->
+  <div id="screen-signup" class="screen auth-wrap">
+    <div class="auth-card">
+      <div class="logo">
+        <div class="logo-mark"><i class="ti ti-layout-kanban"></i></div>
+        <span class="logo-text">Taskflow</span>
+      </div>
+      <h2>Create your account</h2>
+      <p>Get started in seconds</p>
+      <div id="signup-toast" class="toast"></div>
+      <div class="field">
+        <label>Full name</label>
+        <input id="su-name" type="text" placeholder="Alex Chen" />
+      </div>
+      <div class="field">
+        <label>Email</label>
+        <input id="su-email" type="email" placeholder="you@example.com" />
+      </div>
+      <div class="field">
+        <label>Password <span style="color:var(--text-3);font-size:11px">min 6 chars</span></label>
+        <input id="su-password" type="password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="signup-btn" onclick="doSignup()">Create account</button>
+      <p class="auth-switch">Already have an account? <a onclick="showScreen('signin')">Sign in</a></p>
+    </div>
+  </div>
+
+  <!-- ── Dashboard ── -->
+  <div id="screen-dash" class="screen dash-wrap">
+
+    <div class="topbar">
+      <div class="topbar-logo">
+        <div class="logo-mark"><i class="ti ti-layout-kanban"></i></div>
+        <span>Taskflow</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="user-chip">
+          <div class="avatar" id="user-avatar">?</div>
+          <span id="user-name-display">User</span>
+        </div>
+        <button class="btn-ghost" onclick="doSignout()">
+          <i class="ti ti-logout"></i> Sign out
+        </button>
+      </div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('notes', this)">
+        <i class="ti ti-notes"></i> Notes
+      </button>
+      <button class="tab" onclick="switchTab('photos', this)">
+        <i class="ti ti-photo"></i> Photos
+      </button>
+    </div>
+
+    <div class="dash-body">
+
+      <!-- Notes Panel -->
+      <div id="tab-notes" class="tab-panel active">
+        <div class="section-header">
+          <div style="display:flex;align-items:center">
+            <span class="section-title">My notes</span>
+            <span class="count-badge" id="notes-count">0</span>
+          </div>
+          <button class="btn-add" onclick="toggleCompose('notes')">
+            <i class="ti ti-plus"></i> Add note
+          </button>
+        </div>
+
+        <div class="compose-box" id="compose-notes">
+          <input id="note-title" type="text" placeholder="Note title" />
+          <textarea id="note-content" placeholder="What's on your mind?"></textarea>
+          <div class="compose-actions">
+            <button class="btn-cancel" onclick="closeCompose('notes')">Cancel</button>
+            <button class="btn-save" onclick="saveNote()">Save note</button>
+          </div>
+        </div>
+
+        <div id="notes-list"></div>
+      </div>
+
+      <!-- Photos Panel -->
+      <div id="tab-photos" class="tab-panel">
+        <div class="section-header">
+          <div style="display:flex;align-items:center">
+            <span class="section-title">My photos</span>
+            <span class="count-badge" id="photos-count">0</span>
+          </div>
+          <button class="btn-add" onclick="toggleCompose('photos')">
+            <i class="ti ti-plus"></i> Add photo URL
+          </button>
+        </div>
+
+        <div class="compose-box" id="compose-photos">
+          <input id="photo-url" type="url" placeholder="https://example.com/photo.jpg" />
+          <div class="compose-actions">
+            <button class="btn-cancel" onclick="closeCompose('photos')">Cancel</button>
+            <button class="btn-save" onclick="savePhoto()">Save photo</button>
+          </div>
+        </div>
+
+        <div id="photos-list"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:3000';
+    let token    = localStorage.getItem('tf_token') || null;
+    let userName = localStorage.getItem('tf_name')  || '';
+
+    /* ── Helpers ── */
+    function showScreen(name) {
+      document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+      document.getElementById('screen-' + name).classList.add('active');
+    }
+
+    function showToast(id, msg, type) {
+      const el = document.getElementById(id);
+      el.textContent = msg;
+      el.className = 'toast ' + type + ' show';
+      setTimeout(() => el.classList.remove('show'), 4000);
+    }
+
+    function setLoading(btnId, loading) {
+      const btn = document.getElementById(btnId);
+      if (btn) btn.disabled = loading;
+    }
+
+    function esc(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+    }
+
+    /* ── Auth ── */
+    async function doSignup() {
+      const name     = document.getElementById('su-name').value.trim();
+      const email    = document.getElementById('su-email').value.trim();
+      const password = document.getElementById('su-password').value;
+
+      if (!name || !email || !password) {
+        return showToast('signup-toast', 'All fields are required.', 'error');
+      }
+
+      setLoading('signup-btn', true);
+      try {
+        const r = await fetch(BASE + '/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
+        });
+        const d = await r.json();
+        if (d.msg && d.msg.toLowerCase().includes('success')) {
+          showToast('signup-toast', 'Account created! Sign in now.', 'success');
+          setTimeout(() => showScreen('signin'), 1200);
+        } else {
+          showToast('signup-toast', d.msg || 'Sign up failed.', 'error');
+        }
+      } catch (e) {
+        showToast('signup-toast', 'Cannot reach server. Is it running on :3000?', 'error');
+      }
+      setLoading('signup-btn', false);
+    }
+
+    async function doSignin() {
+      const email    = document.getElementById('si-email').value.trim();
+      const password = document.getElementById('si-password').value;
+
+      if (!email || !password) {
+        return showToast('signin-toast', 'Email and password required.', 'error');
+      }
+
+      setLoading('signin-btn', true);
+      try {
+        const r = await fetch(BASE + '/signin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const d = await r.json();
+        if (d.token) {
+          token = d.token;
+          localStorage.setItem('tf_token', token);
+          localStorage.setItem('tf_name', email);
+          userName = email;
+          enterDash(email.slice(0, 2).toUpperCase(), email);
+        } else {
+          showToast('signin-toast', d.msg || 'Invalid credentials.', 'error');
+        }
+      } catch (e) {
+        showToast('signin-toast', 'Cannot reach server. Is it running on :3000?', 'error');
+      }
+      setLoading('signin-btn', false);
+    }
+
+    function enterDash(initials, label) {
+      document.getElementById('user-avatar').textContent = initials || '??';
+      document.getElementById('user-name-display').textContent = label;
+      showScreen('dash');
+      loadNotes();
+    }
+
+    function doSignout() {
+      token = null;
+      localStorage.removeItem('tf_token');
+      localStorage.removeItem('tf_name');
+      showScreen('signin');
+    }
+
+    /* ── Tabs ── */
+    function switchTab(name, btn) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+      if (name === 'notes')  loadNotes();
+      if (name === 'photos') loadPhotos();
+    }
+
+    /* ── Compose ── */
+    function toggleCompose(type) {
+      document.getElementById('compose-' + type).classList.toggle('open');
+    }
+    function closeCompose(type) {
+      document.getElementById('compose-' + type).classList.remove('open');
+    }
+
+    /* ── Notes ── */
+    async function loadNotes() {
+      const list = document.getElementById('notes-list');
+      list.innerHTML = '<div class="loading-pulse"><div class="pulse-card"></div><div class="pulse-card"></div><div class="pulse-card"></div></div>';
+
+      try {
+        const r = await fetch(BASE + '/notes', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const d = await r.json();
+        const notes = d.notes || [];
+        document.getElementById('notes-count').textContent = notes.length;
+
+        if (notes.length === 0) {
+          list.innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-notes"></i>
+              <p>No notes yet. Add your first one.</p>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = `<div class="notes-grid">
+          ${notes.map(n => `
+            <div class="note-card">
+              <div class="note-dot"></div>
+              <div class="note-card-title">${esc(n.title || 'Untitled')}</div>
+              <div class="note-card-content">${esc(n.content || '')}</div>
+              <div class="note-card-date">${n._id ? '#' + n._id.toString().slice(-6) : ''}</div>
+            </div>`).join('')}
+        </div>`;
+      } catch (e) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <i class="ti ti-wifi-off"></i>
+            <p>Could not load notes. Check server connection.</p>
+          </div>`;
+      }
+    }
+
+    async function saveNote() {
+      const title   = document.getElementById('note-title').value.trim();
+      const content = document.getElementById('note-content').value.trim();
+      if (!title) return;
+
+      try {
+        await fetch(BASE + '/notes', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({ title, content })
+        });
+        document.getElementById('note-title').value   = '';
+        document.getElementById('note-content').value = '';
+        closeCompose('notes');
+        loadNotes();
+      } catch (e) {
+        console.error('Failed to save note:', e);
+      }
+    }
+
+    /* ── Photos ── */
+    async function loadPhotos() {
+      const list = document.getElementById('photos-list');
+      list.innerHTML = '<div class="loading-pulse"><div class="pulse-card"></div><div class="pulse-card"></div><div class="pulse-card"></div></div>';
+
+      try {
+        const r = await fetch(BASE + '/photos', {
+          headers: { Authorization: 'Bearer ' + token }
+        });
+        const d = await r.json();
+        const photos = d.photos || [];
+        document.getElementById('photos-count').textContent = photos.length;
+
+        if (photos.length === 0) {
+          list.innerHTML = `
+            <div class="empty-state">
+              <i class="ti ti-photo"></i>
+              <p>No photos yet. Paste a URL to add one.</p>
+            </div>`;
+          return;
+        }
+
+        list.innerHTML = `<div class="photo-grid">
+          ${photos.map(p => `
+            <div class="photo-card">
+              <div class="photo-thumb">
+                <img
+                  src="${esc(p.url)}"
+                  alt="Photo"
+                  onerror="this.parentNode.innerHTML='<div class=\\'photo-thumb-placeholder\\'><i class=\\'ti ti-photo-off\\'></i></div>'"
+                />
+              </div>
+              <div class="photo-url">${esc(p.url)}</div>
+            </div>`).join('')}
+        </div>`;
+      } catch (e) {
+        list.innerHTML = `
+          <div class="empty-state">
+            <i class="ti ti-wifi-off"></i>
+            <p>Could not load photos. Check server connection.</p>
+          </div>`;
+      }
+    }
+
+    async function savePhoto() {
+      const url = document.getElementById('photo-url').value.trim();
+      if (!url) return;
+
+      try {
+        await fetch(BASE + '/photos', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({ url })
+        });
+        document.getElementById('photo-url').value = '';
+        closeCompose('photos');
+        loadPhotos();
+      } catch (e) {
+        console.error('Failed to save photo:', e);
+      }
+    }
+
+    /* ── Auto-login if token exists ── */
+    if (token) {
+      enterDash((userName || 'U').slice(0, 2).toUpperCase(), userName);
+    }
+  </script>
+</body>
+</html>
